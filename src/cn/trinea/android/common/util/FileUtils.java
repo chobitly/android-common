@@ -13,12 +13,14 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
+import android.text.TextUtils;
+
 /**
  * File Utils
  * <ul>
  * Read or write file
- * <li>{@link #readFile(String)} read file</li>
- * <li>{@link #readFileToList(String)} read file to string list</li>
+ * <li>{@link #readFile(String, String)} read file</li>
+ * <li>{@link #readFileToList(String, String)} read file to string list</li>
  * <li>{@link #writeFile(String, String, boolean)} write file from String</li>
  * <li>{@link #writeFile(String, String)} write file from String</li>
  * <li>{@link #writeFile(String, List, boolean)} write file from String List</li>
@@ -30,6 +32,7 @@ import java.util.List;
  * </ul>
  * <ul>
  * Operate file
+ * <li>{@link #moveFile(File, File)} or {@link #moveFile(String, String)}</li>
  * <li>{@link #copyFile(String, String)}</li>
  * <li>{@link #getFileExtension(String)}</li>
  * <li>{@link #getFileName(String)}</li>
@@ -78,18 +81,11 @@ public class FileUtils {
                 }
                 fileContent.append(line);
             }
-            reader.close();
             return fileContent;
         } catch (IOException e) {
             throw new RuntimeException("IOException occurred. ", e);
         } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    throw new RuntimeException("IOException occurred. ", e);
-                }
-            }
+            IOUtils.close(reader);
         }
     }
 
@@ -112,18 +108,11 @@ public class FileUtils {
             makeDirs(filePath);
             fileWriter = new FileWriter(filePath, append);
             fileWriter.write(content);
-            fileWriter.close();
             return true;
         } catch (IOException e) {
             throw new RuntimeException("IOException occurred. ", e);
         } finally {
-            if (fileWriter != null) {
-                try {
-                    fileWriter.close();
-                } catch (IOException e) {
-                    throw new RuntimeException("IOException occurred. ", e);
-                }
-            }
+            IOUtils.close(fileWriter);
         }
     }
 
@@ -152,18 +141,11 @@ public class FileUtils {
                 }
                 fileWriter.write(line);
             }
-            fileWriter.close();
             return true;
         } catch (IOException e) {
             throw new RuntimeException("IOException occurred. ", e);
         } finally {
-            if (fileWriter != null) {
-                try {
-                    fileWriter.close();
-                } catch (IOException e) {
-                    throw new RuntimeException("IOException occurred. ", e);
-                }
-            }
+            IOUtils.close(fileWriter);
         }
     }
 
@@ -252,14 +234,35 @@ public class FileUtils {
         } catch (IOException e) {
             throw new RuntimeException("IOException occurred. ", e);
         } finally {
-            if (o != null) {
-                try {
-                    o.close();
-                    stream.close();
-                } catch (IOException e) {
-                    throw new RuntimeException("IOException occurred. ", e);
-                }
-            }
+            IOUtils.close(o);
+            IOUtils.close(stream);
+        }
+    }
+
+    /**
+     * move file
+     * 
+     * @param sourceFilePath
+     * @param destFilePath
+     */
+    public static void moveFile(String sourceFilePath, String destFilePath) {
+        if (TextUtils.isEmpty(sourceFilePath) || TextUtils.isEmpty(destFilePath)) {
+            throw new RuntimeException("Both sourceFilePath and destFilePath cannot be null.");
+        }
+        moveFile(new File(sourceFilePath), new File(destFilePath));
+    }
+
+    /**
+     * move file
+     * 
+     * @param srcFile
+     * @param destFile
+     */
+    public static void moveFile(File srcFile, File destFile) {
+        boolean rename = srcFile.renameTo(destFile);
+        if (!rename) {
+            copyFile(srcFile.getAbsolutePath(), destFile.getAbsolutePath());
+            deleteFile(srcFile.getAbsolutePath());
         }
     }
 
@@ -304,18 +307,11 @@ public class FileUtils {
             while ((line = reader.readLine()) != null) {
                 fileContent.add(line);
             }
-            reader.close();
             return fileContent;
         } catch (IOException e) {
             throw new RuntimeException("IOException occurred. ", e);
         } finally {
-            if (reader != null) {
-                try {
-                    reader.close();
-                } catch (IOException e) {
-                    throw new RuntimeException("IOException occurred. ", e);
-                }
-            }
+            IOUtils.close(reader);
         }
     }
 
